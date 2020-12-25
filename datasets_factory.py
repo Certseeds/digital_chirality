@@ -3,9 +3,10 @@ import torchvision
 from torchvision import datasets, transforms
 from torchvision.datasets.folder import default_loader, DatasetFolder
 from PIL import Image
-from utils import mosaic, demosaic, rand_rgb_image
+from utils import mosaic, demosaic, rand_rgb_image,get_random_graph_from_a_path
 import cv2
 import numpy as np
+import random
 
 def get_transform(image_size, crop, crop_size):
     assert crop in ["none", 'random_crop_inside_boundary']
@@ -16,8 +17,9 @@ def get_transform(image_size, crop, crop_size):
     if crop == "none":
         print("No cropping to the images.")
     elif crop == "random_crop_inside_boundary":
-        boundary = image_size - 32 # 16 pixels boundary
-        print(f"First performing a center crop of size {boundary} to avoid boundary")
+        boundary = image_size - 32  # 16 pixels boundary
+        print(
+            f"First performing a center crop of size {boundary} to avoid boundary")
         transforms_list_train += [
             transforms.CenterCrop(boundary),
             transforms.RandomCrop(crop_size)
@@ -26,7 +28,8 @@ def get_transform(image_size, crop, crop_size):
             transforms.CenterCrop(boundary),
             transforms.RandomCrop(crop_size)
         ]
-
+        # TODO, i should test what will happen if the training data is
+        # after cut and test do not accept cut, etc the four times of cases
     transforms_list_train += [transforms.ToTensor()]
     transforms_list_test += [transforms.ToTensor()]
 
@@ -35,6 +38,7 @@ def get_transform(image_size, crop, crop_size):
         'test': transforms.Compose(transforms_list_test),
     }
     return data_transforms
+
 
 def get_dataloaders(train_size=100000,
                     val_size=5000,
@@ -47,11 +51,12 @@ def get_dataloaders(train_size=100000,
                     crop='random_crop_inside_boundary',
                     crop_size=512,
                     batch_size=4,
-                    num_workers=4):
+                    num_workers=0):
     '''
         Return a factory of PyTorch dataset/dataloader
     '''
-    data_transform = get_transform(image_size, crop, crop_size) # A dict with 'train' 'test'
+    data_transform = get_transform(
+        image_size, crop, crop_size)  # A dict with 'train' 'test'
 
     train_dataset = ChiralDataset(train_size,
                                   data_transform['train'],
@@ -61,27 +66,28 @@ def get_dataloaders(train_size=100000,
                                   demosaic_algo=demosaic_algo,
                                   bayer_pattern=bayer_pattern,
                                   jpeg_coeff=jpeg_coeff)
-    val_dataset   = ChiralDataset(val_size,
-                                  data_transform['test'],
-                                  image_type=image_type,
-                                  image_size=image_size,
-                                  image_pattern=image_pattern,
-                                  demosaic_algo=demosaic_algo,
-                                  bayer_pattern=bayer_pattern,
-                                  jpeg_coeff=jpeg_coeff,)
+    val_dataset = ChiralDataset(val_size,
+                                data_transform['test'],
+                                image_type=image_type,
+                                image_size=image_size,
+                                image_pattern=image_pattern,
+                                demosaic_algo=demosaic_algo,
+                                bayer_pattern=bayer_pattern,
+                                jpeg_coeff=jpeg_coeff,)
 
     return {
-        'train' : torch.utils.data.DataLoader(train_dataset, 
-                                              batch_size=batch_size, 
-                                              shuffle=False,
-                                              num_workers=num_workers,
-                                              pin_memory=False),
-        'val' : torch.utils.data.DataLoader(val_dataset,
-                                            batch_size=batch_size,
-                                            shuffle=False,
-                                            num_workers=num_workers,
-                                            pin_memory=False),
+        'train': torch.utils.data.DataLoader(train_dataset,
+                                             batch_size=batch_size,
+                                             shuffle=False,
+                                             num_workers=num_workers,
+                                             pin_memory=False),
+        'val': torch.utils.data.DataLoader(val_dataset,
+                                           batch_size=batch_size,
+                                           shuffle=False,
+                                           num_workers=num_workers,
+                                           pin_memory=False),
     }
+
 
 class ChiralDataset(torch.utils.data.Dataset):
     def __init__(self,
@@ -117,12 +123,14 @@ class ChiralDataset(torch.utils.data.Dataset):
 
         self.encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_coeff]
 
-        self.shared_batch_base_seed = 0 # Should be the epoch number
+        self.shared_batch_base_seed = 0  # Should be the epoch number
 
     def __getitem__(self, index):
         np.random.seed(self.shared_batch_base_seed * self.size + int(index/2))
-        image_original = rand_rgb_image(self.image_size, self.image_pattern)
-
+        image_original = rand_rgb_image(self.image_size+(2*random.randrange(1,int(self.image_size/10))+1)*(random.randint(-1,1)), self.image_pattern)
+        image_original = cv2.resize(image_original,(self.image_size,self.image_size))
+        #image_original = get_random_graph_from_a_path()
+        #img = image_original
         if self.image_type == 'original':
             img = image_original
         elif self.image_type == 'jpeg':
@@ -144,12 +152,12 @@ class ChiralDataset(torch.utils.data.Dataset):
                 both_new = cv2.imdecode(both_new, 1)
                 img = cv2.cvtColor(both_new, cv2.COLOR_BGR2RGB)
         sample = Image.fromarray(img)
-        
+
         if index % 2 == 0:
             sample = self.horizontalFlip(sample)
-            label = 0 # Flip is 0
+            label = 0  # Flip is 0
         else:
-            label = 1 # Original is 1
+            label = 1  # Original is 1
 
         if self.transform:
             sample = self.transform(sample)
@@ -158,4 +166,3 @@ class ChiralDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return self.size
-

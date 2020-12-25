@@ -6,7 +6,7 @@
 # 512+64=576 image size, while random cropping 512 within 16px boundary
     # Achieve 99% accuracy
     OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python train.py --train_size 100000 --val_size 5000 --image_pattern gaussian_rgb --demosaic_algo Malvar2004 --image_size 576 --crop_size 512 --image_type both  --crop random_crop_inside_boundary
-    
+
     # Stuck at ~50% accuracy
     OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python train.py --train_size 100000 --val_size 5000 --image_pattern gaussian_rgb --demosaic_algo Malvar2004 --image_size 576 --crop_size 512 --image_type jpeg  --crop random_crop_inside_boundary
         # lr tuning, and none achieve a better accuracy
