@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding=utf-8
 # Training an infinitely large dataset
 import torch
 import torch.nn as nn

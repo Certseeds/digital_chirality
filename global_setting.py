@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding=utf-8
 ORIGINAL_NAME = 'original' # Original Image without processing
 JPEG_NAME = 'jpeg' # JPEG compressed only
 DEMOSAIC_NAME = 'demosaic' # Bayer-Demosaicing only

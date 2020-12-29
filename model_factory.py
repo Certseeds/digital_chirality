@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding=utf-8
 import global_setting
 from models.resnet import get_resnet_model
 

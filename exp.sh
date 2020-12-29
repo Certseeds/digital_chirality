@@ -1,3 +1,6 @@
+#!/bin/bash
+set -eoux pipefail
+
 # README: Since our script generating the random images for training/validation on the fly using memory,
 #         sometime deadlocks may happen in PyTorch dataloader when num_workers > 0.
 #         The solution is to use "OMP_NUM_THREADS=1 MKL_NUM_THREADS=1" as prefix to each of those scripts.

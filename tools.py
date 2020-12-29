@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding=utf-8
 import torch
 from torch import nn
 from torch.optim import lr_scheduler

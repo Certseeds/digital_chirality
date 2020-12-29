@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# coding=utf-8
 import torch
 import torchvision
 from torchvision import datasets, transforms
